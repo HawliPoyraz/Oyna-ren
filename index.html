@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bilisim Projesi - Motor Yarisi</title>
+    <style>
+        body { margin: 0; background: #222; overflow: hidden; font-family: sans-serif; }
+        canvas { display: block; margin: 0 auto; background: #444; border: 5px solid #fff; }
+        #ui { position: absolute; top: 10px; left: 10px; color: white; font-size: 20px; }
+    </style>
+</head>
+<body>
+    <div id="ui">Bolum: <span id="lvl">1</span> | Skor: <span id="score">0</span></div>
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        canvas.width = 400; canvas.height = 600;
+
+        let player = { x: 175, y: 500, w: 50, h: 80, speed: 5 };
+        let obstacles = [];
+        let score = 0;
+        let level = 1;
+        let gameActive = true;
+
+        // Kontroller
+        window.addEventListener("keydown", (e) => {
+            if(e.key == "ArrowLeft" && player.x > 0) player.x -= 20;
+            if(e.key == "ArrowRight" && player.x < 350) player.x += 20;
+        });
+
+        function createObstacle() {
+            let x = Math.random() * (canvas.width - 50);
+            obstacles.push({ x: x, y: -100, w: 50, h: 80, speed: 3 + level });
+        }
+
+        function update() {
+            if(!gameActive) return;
+            
+            // Engel oluşturma sıklığı bölüme göre artar
+            if(Math.random() < 0.02 + (level * 0.005)) createObstacle();
+
+            obstacles.forEach((obs, index) => {
+                obs.y += obs.speed;
+                // Çarpışma Kontrolü
+                if (player.x < obs.x + obs.w && player.x + player.w > obs.x &&
+                    player.y < obs.y + obs.h && player.y + player.h > obs.y) {
+                    gameActive = false;
+                    alert("OYUN BITTI! Bolum: " + level);
+                    location.reload();
+                }
+                // Skor ve Bölüm Atlama (Her 10 skorda bir yeni bölüm)
+                if(obs.y > canvas.height) {
+                    obstacles.splice(index, 1);
+                    score++;
+                    document.getElementById("score").innerText = score;
+                    if(score % 10 == 0) { 
+                        level++; 
+                        document.getElementById("lvl").innerText = level;
+                    }
+                }
+            });
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // Yol Çizimi
+            ctx.fillStyle = "gray"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = "white"; ctx.setLineDash([20, 20]);
+            ctx.beginPath(); ctx.moveTo(200, 0); ctx.lineTo(200, 600); ctx.stroke();
+
+            // Motorcu (Player)
+            ctx.fillStyle = "blue"; ctx.fillRect(player.x, player.y, player.w, player.h);
+            
+            // Engeller (Rakip Motorlar)
+            ctx.fillStyle = "red";
+            obstacles.forEach(obs => { ctx.fillRect(obs.x, obs.y, obs.w, obs.h); });
+
+            update();
+            requestAnimationFrame(draw);
+        }
+        draw();
+    </script>
+</body>
+</html>

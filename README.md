@@ -1,2 +1,0 @@
-# Oyna-ren
-Oyna
